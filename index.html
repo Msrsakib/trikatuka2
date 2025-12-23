@@ -8,19 +8,18 @@
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; }
         .header { text-align: center; padding: 30px; color: #1DB954; }
         .main-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        .account-box { background: #181818; border: 1px solid #282828; border-radius: 10px; padding: 20px; width: 45%; min-width: 320px; }
-        .playlist-item { background: #282828; margin: 10px 0; padding: 12px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .account-box { background: #181818; border: 1px solid #282828; border-radius: 10px; padding: 20px; width: 45%; min-width: 320px; text-align: center; }
+        .playlist-item { background: #282828; margin: 10px 0; padding: 12px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; text-align: left; }
         button { background: #1DB954; color: white; border: none; padding: 12px 24px; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         button:hover { background: #1ed760; transform: scale(1.02); }
-        .transfer-btn { background: #ffffff; color: #000000; padding: 6px 12px; font-size: 12px; }
-        .status-text { font-size: 13px; color: #b3b3b3; margin-top: 10px; }
+        .status-text { font-size: 13px; color: #b3b3b3; margin-top: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1>Spotify Playlist Migrator</h1>
-    <p>Login to both accounts to transfer playlists side-by-side</p>
+    <p>Transfer playlists between two accounts side-by-side</p>
 </div>
 
 <div class="main-container">
@@ -41,16 +40,21 @@
 
 <script>
     // Config
-    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc';
+    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc'; 
     const REDIRECT_URI = 'https://msrsakib.github.io/trikatuka2/'; 
     const SCOPES = 'playlist-read-private playlist-modify-public playlist-modify-private user-library-read';
 
     function login(type) {
         localStorage.setItem('login_type', type);
-        const authUrl = "https://accounts.spotify.com/authorize?client_id=$" + CLIENT_ID + 
+        
+        // Corrected Spotify Auth URL
+        const authUrl = "https://accounts.spotify.com/authorize" +
+                        "?client_id=" + CLIENT_ID +
                         "&response_type=token" +
-                        "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) + 
+                        "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) +
                         "&scope=" + encodeURIComponent(SCOPES);
+        
+        console.log("Redirecting to:", authUrl);
         window.location.href = authUrl;
     }
 
@@ -66,3 +70,42 @@
         if (hash.access_token) {
             const type = localStorage.getItem('login_type');
             localStorage.setItem(type + '_token', hash.access_token);
+            window.location.hash = ''; 
+            window.location.reload();
+        }
+
+        const sToken = localStorage.getItem('source_token');
+        const dToken = localStorage.getItem('dest_token');
+
+        if (sToken) fetchPlaylists('source', sToken);
+        if (dToken) fetchPlaylists('dest', dToken);
+    };
+
+    async function fetchPlaylists(type, token) {
+        try {
+            const res = await fetch('https://api.spotify.com/v1/me/playlists', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            const container = document.getElementById(type + '-playlists');
+            container.innerHTML = '';
+            
+            if (data.items) {
+                data.items.forEach(pl => {
+                    const item = document.createElement('div');
+                    item.className = 'playlist-item';
+                    item.innerHTML = `<span>${pl.name}</span>`;
+                    container.appendChild(item);
+                });
+                document.getElementById('status-' + type).innerText = data.items.length + " Playlists found";
+                document.getElementById('btn-' + type).innerText = "Logged In";
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('status-' + type).innerText = "Session expired. Login again.";
+        }
+    }
+</script>
+
+</body>
+</html>
