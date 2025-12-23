@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Playlist Migrator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: #181818; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 400px; }
+        h1 { color: #1DB954; margin-bottom: 20px; }
+        button { background-color: #1DB954; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; transition: transform 0.2s; }
+        button:hover { transform: scale(1.05); background-color: #1ed760; }
+        #status { margin-top: 20px; font-size: 14px; color: #b3b3b3; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Spotify Migrator</h1>
+    <p>Transfer your playlists between accounts easily.</p>
+    <button id="login-btn">Login with Spotify</button>
+    <div id="status">Ready to connect...</div>
+</div>
+
+<script>
+    // Configuration
+    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc'; // Replace with your ID from image_af4305.jpg
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
+    const SCOPES = 'playlist-read-private playlist-modify-public playlist-modify-private user-library-read';
+
+    document.getElementById('login-btn').addEventListener('click', () => {
+        const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
+        window.location.href = authUrl;
+    });
+
+    // Check for Access Token after login
+    window.addEventListener('load', () => {
+        const hash = window.location.hash.substring(1).split('&').reduce((initial, item) => {
+            if (item) {
+                let parts = item.split('=');
+                initial[parts[0]] = decodeURIComponent(parts[1]);
+            }
+            return initial;
+        }, {});
+
+        if (hash.access_token) {
+            document.getElementById('login-btn').style.display = 'none';
+            document.getElementById('status').innerHTML = "Authenticated! Loading playlists...";
+            console.log("Token received:", hash.access_token);
+            // Playlist fetching logic will go here
+        }
+    });
+</script>
+
+</body>
+</html>
