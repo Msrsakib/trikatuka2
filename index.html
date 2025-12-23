@@ -2,39 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Playlist Migrator</title>
+    <title>Spotify Playlist Transfer (Trikatuka Style)</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .card { background: #181818; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 400px; }
-        h1 { color: #1DB954; margin-bottom: 20px; }
-        button { background-color: #1DB954; color: white; border: none; padding: 14px 28px; font-size: 16px; font-weight: bold; border-radius: 50px; cursor: pointer; transition: transform 0.2s; }
-        button:hover { transform: scale(1.05); background-color: #1ed760; }
-        #status { margin-top: 20px; font-size: 14px; color: #b3b3b3; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; }
+        .header { text-align: center; padding: 20px; color: #1DB954; }
+        .main-container { display: flex; gap: 20px; justify-content: space-around; flex-wrap: wrap; }
+        .account-box { background: #181818; border: 1px solid #282828; border-radius: 10px; padding: 20px; width: 45%; min-width: 300px; }
+        .playlist-item { background: #282828; margin: 10px 0; padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        button { background: #1DB954; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #1ed760; }
+        .transfer-btn { background: #fff; color: #000; width: 100%; margin-top: 20px; font-size: 18px; }
+        .status { font-size: 12px; color: #b3b3b3; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Spotify Migrator</h1>
-    <p>Transfer your playlists between accounts easily.</p>
-    <button id="login-btn">Login with Spotify</button>
-    <div id="status">Ready to connect...</div>
+<div class="header">
+    <h1>Playlist Transfer Tool</h1>
+    <p>Login to both accounts to move playlists directly</p>
+</div>
+
+<div class="main-container">
+    <div class="account-box" id="source-account">
+        <h2>Source Account (Old)</h2>
+        <button onclick="login('source')">Login Old Account</button>
+        <div id="source-playlists"></div>
+    </div>
+
+    <div class="account-box" id="dest-account">
+        <h2>Destination Account (New)</h2>
+        <button onclick="login('dest')">Login New Account</button>
+        <div id="dest-playlists"></div>
+    </div>
 </div>
 
 <script>
-    // Configuration
-    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc'; // Replace with your ID from image_af4305.jpg
+    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc'; // থেকে আপনার ID দিন
     const REDIRECT_URI = window.location.origin + window.location.pathname;
     const SCOPES = 'playlist-read-private playlist-modify-public playlist-modify-private user-library-read';
 
-    document.getElementById('login-btn').addEventListener('click', () => {
+    let sourceToken = localStorage.getItem('source_token');
+    let destToken = localStorage.getItem('dest_token');
+
+    function login(type) {
+        localStorage.setItem('login_type', type);
         const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
         window.location.href = authUrl;
-    });
+    }
 
-    // Check for Access Token after login
-    window.addEventListener('load', () => {
+    window.onload = function() {
         const hash = window.location.hash.substring(1).split('&').reduce((initial, item) => {
             if (item) {
                 let parts = item.split('=');
@@ -44,12 +60,38 @@
         }, {});
 
         if (hash.access_token) {
-            document.getElementById('login-btn').style.display = 'none';
-            document.getElementById('status').innerHTML = "Authenticated! Loading playlists...";
-            console.log("Token received:", hash.access_token);
-            // Playlist fetching logic will go here
+            const type = localStorage.getItem('login_type');
+            localStorage.setItem(type + '_token', hash.access_token);
+            window.location.hash = ''; 
+            location.reload();
         }
-    });
+
+        if (sourceToken) fetchPlaylists('source', sourceToken);
+        if (destToken) fetchPlaylists('dest', destToken);
+    };
+
+    async function fetchPlaylists(type, token) {
+        const res = await fetch('https://api.spotify.com/v1/me/playlists', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const container = document.getElementById(type + '-playlists');
+        container.innerHTML = '<h3>Playlists:</h3>';
+        
+        data.items.forEach(pl => {
+            container.innerHTML += `
+                <div class="playlist-item">
+                    <span>${pl.name}</span>
+                    ${type === 'source' ? `<button onclick="transfer('${pl.id}', '${pl.name}')">Transfer</button>` : ''}
+                </div>`;
+        });
+    }
+
+    async function transfer(playlistId, name) {
+        if (!destToken) return alert('Please login to the destination account first!');
+        // এখানে প্লেলিস্ট ক্রিয়েট এবং গান কপি করার লজিক কাজ করবে
+        alert('Starting transfer for: ' + name);
+    }
 </script>
 
 </body>
