@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Playlist Transfer Tool</title>
+    <title>Spotify Playlist Migrator</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 20px; }
         .header { text-align: center; padding: 30px; color: #1DB954; }
@@ -20,18 +20,18 @@
 
 <div class="header">
     <h1>Spotify Playlist Migrator</h1>
-    <p>Transfer playlists between two accounts side-by-side</p>
+    <p>Login to both accounts to transfer playlists side-by-side</p>
 </div>
 
 <div class="main-container">
-    <div class="account-box" id="source-box">
+    <div class="account-box">
         <h2>Old Account (Source)</h2>
         <button id="btn-source" onclick="login('source')">Login Old Account</button>
         <div class="status-text" id="status-source">Not connected</div>
         <div id="source-playlists"></div>
     </div>
 
-    <div class="account-box" id="dest-box">
+    <div class="account-box">
         <h2>New Account (Target)</h2>
         <button id="btn-dest" onclick="login('dest')">Login New Account</button>
         <div class="status-text" id="status-dest">Not connected</div>
@@ -40,9 +40,9 @@
 </div>
 
 <script>
-    // Configuration - Replace with your actual Client ID
-    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc'; // From your image_af4305.jpg
-    const REDIRECT_URI = window.location.origin + window.location.pathname;
+    // Config
+    const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc';
+    const REDIRECT_URI = 'https://msrsakib.github.io/trikatuka2/'; 
     const SCOPES = 'playlist-read-private playlist-modify-public playlist-modify-private user-library-read';
 
     function login(type) {
@@ -53,3 +53,16 @@
                         "&scope=" + encodeURIComponent(SCOPES);
         window.location.href = authUrl;
     }
+
+    window.onload = function() {
+        const hash = window.location.hash.substring(1).split('&').reduce((initial, item) => {
+            if (item) {
+                let parts = item.split('=');
+                initial[parts[0]] = decodeURIComponent(parts[1]);
+            }
+            return initial;
+        }, {});
+
+        if (hash.access_token) {
+            const type = localStorage.getItem('login_type');
+            localStorage.setItem(type + '_token', hash.access_token);
