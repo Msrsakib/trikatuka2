@@ -39,6 +39,7 @@
 </div>
 
 <script>
+    // Corrected configuration
     const CLIENT_ID = 'ac9c15183ee948628afdd6b518cc29dc'; 
     const REDIRECT_URI = 'https://msrsakib.github.io/trikatuka2/';
     const SCOPES = 'playlist-read-private playlist-modify-public playlist-modify-private user-library-read';
@@ -46,8 +47,8 @@
     function login(type) {
         localStorage.setItem('login_type', type);
         
-        // Final Corrected Auth URL format
-        const authUrl = "http://googleusercontent.com/spotify.com/7" + 
+        // FIXED URL: Direct to Spotify Accounts
+        const authUrl = "https://accounts.spotify.com/authorize" + 
                         "?client_id=" + CLIENT_ID + 
                         "&response_type=token" + 
                         "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) + 
